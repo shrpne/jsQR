@@ -3,30 +3,32 @@ import { decode } from "./decoder/decoder";
 import { extract } from "./extractor";
 import { locate } from "./locator";
 function scan(matrix) {
-    const location = locate(matrix);
-    if (!location) {
+    const locations = locate(matrix);
+    if (!locations) {
         return null;
     }
-    const extracted = extract(matrix, location);
-    const decoded = decode(extracted.matrix);
-    if (!decoded) {
-        return null;
+    for (const location of locations) {
+        const extracted = extract(matrix, location);
+        const decoded = decode(extracted.matrix);
+        if (decoded) {
+            return {
+                binaryData: decoded.bytes,
+                data: decoded.text,
+                chunks: decoded.chunks,
+                location: {
+                    topRightCorner: extracted.mappingFunction(location.dimension, 0),
+                    topLeftCorner: extracted.mappingFunction(0, 0),
+                    bottomRightCorner: extracted.mappingFunction(location.dimension, location.dimension),
+                    bottomLeftCorner: extracted.mappingFunction(0, location.dimension),
+                    topRightFinderPattern: location.topRight,
+                    topLeftFinderPattern: location.topLeft,
+                    bottomLeftFinderPattern: location.bottomLeft,
+                    bottomRightAlignmentPattern: location.alignmentPattern,
+                },
+            };
+        }
     }
-    return {
-        binaryData: decoded.bytes,
-        data: decoded.text,
-        chunks: decoded.chunks,
-        location: {
-            topRightCorner: extracted.mappingFunction(location.dimension, 0),
-            topLeftCorner: extracted.mappingFunction(0, 0),
-            bottomRightCorner: extracted.mappingFunction(location.dimension, location.dimension),
-            bottomLeftCorner: extracted.mappingFunction(0, location.dimension),
-            topRightFinderPattern: location.topRight,
-            topLeftFinderPattern: location.topLeft,
-            bottomLeftFinderPattern: location.bottomLeft,
-            bottomRightAlignmentPattern: location.alignmentPattern,
-        },
-    };
+    return null;
 }
 const defaultOptions = {
     inversionAttempts: "attemptBoth",
